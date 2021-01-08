@@ -2,10 +2,10 @@ package bolts;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.HashSet;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -15,54 +15,46 @@ import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.tuple.Values;
 
-import twitter4j.Status;
-
-public class FilterIrrelevantWordsBolt extends BaseRichBolt {
-	private static final long serialVersionUID = 1000002L;
+public class NegativeWordsBolt extends BaseRichBolt{
+	private static final long serialVersionUID = 1000004L;
 	private OutputCollector collector;
-	private Set<String> uselessWords;
+	private Set<String> negativeWords;
 	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
-		this.uselessWords = getUselessWords();
+		this.negativeWords = getNegativeWords();
 	}
 	
 	@Override
 	public void execute(Tuple input) {
-		final Status tweet = (Status) input.getValueByField("tweet");
-		String tweet_string;
-		if (tweet.getRetweetedStatus() != null) {
-			tweet_string = tweet.getRetweetedStatus().getText().toLowerCase();
-        } else {
-			tweet_string = tweet.getText().toLowerCase();
-        }
-		String filteredTweet = "";
+		final String tweet_string = (String) input.getValue(0);
+		boolean negativeTweet = false;
 		for (String word : tweet_string.split(" ")) {
-			if (!uselessWords.contains(word)) {
-				filteredTweet = filteredTweet + " " + word;
+			if (negativeWords.contains(word)) {
+				negativeTweet = true;
 			}
 		}
-		collector.emit(new Values(tweet_string));
+		collector.emit(new Values(tweet_string, false, negativeTweet));
 	}
 	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("tweet_string"));
+		declarer.declare(new Fields("tweet_string", "sentiment", "sentiment_value"));
 	}
 	
-	private Set<String> getUselessWords() {
-		Set<String> uselessWords = new HashSet<String>();
+	private Set<String> getNegativeWords() {
+		Set<String> negativeWords = new HashSet<String>();
 		try {
-			Scanner scanner = new Scanner(new File("./src/main/resources/uselessWords.txt"));
+			Scanner scanner = new Scanner(new File("./src/main/resources/negativeWords.txt"));
 			while (scanner.hasNextLine()) {
-				uselessWords.add(scanner.nextLine());
+				negativeWords.add(scanner.nextLine());
 			}
 			scanner.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		return uselessWords;
+		return negativeWords;
 	}
 }

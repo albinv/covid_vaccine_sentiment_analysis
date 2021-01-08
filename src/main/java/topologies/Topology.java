@@ -6,7 +6,9 @@ import org.apache.storm.topology.TopologyBuilder;
 
 import spouts.TwitterStreamingSpout;
 import bolts.FilterIrrelevantWordsBolt;
-
+import bolts.PositiveWordsBolt;
+import bolts.NegativeWordsBolt;
+import bolts.ScoreBolt;
 
 public class Topology {
 	
@@ -15,21 +17,21 @@ public class Topology {
 		builder.setSpout("twitterSpout", new TwitterStreamingSpout());
 		builder.setBolt("filterWords", new FilterIrrelevantWordsBolt()).shuffleGrouping("twitterSpout");
 		
+		builder.setBolt("positiveCount", new PositiveWordsBolt()).shuffleGrouping("filterWords");
+		builder.setBolt("negativeCount", new NegativeWordsBolt()).shuffleGrouping("filterWords");
+		
+		
+		builder.setBolt("score", new ScoreBolt()).shuffleGrouping("positiveCount").shuffleGrouping("negativeCount");
+		
 		Config config = new Config();
 		config.setDebug(false);
-		//config.setMessageTimeoutSecs(120);
 
 		final LocalCluster cluster = new LocalCluster();
 		cluster.submitTopology("big_data_a2", config, builder.createTopology());
-		Thread.sleep(30000);
-		cluster.shutdown();
 		
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				cluster.killTopology("big_data_a2");
-				cluster.shutdown();
-			}
-		});
+		//Thread.sleep(60000);
+		//cluster.killTopology("big_data_a2");
+		//cluster.shutdown();
+		return;
 	}
 }
