@@ -31,19 +31,23 @@ public class FilterIrrelevantWordsBolt extends BaseRichBolt {
 	
 	@Override
 	public void execute(Tuple input) {
+		//get tweet which is stored in the param tuple passed in
 		final Status tweet = (Status) input.getValueByField("tweet");
 		String tweet_string;
+		//make sure that the full text from the tweet is retrieved
 		if (tweet.getRetweetedStatus() != null) {
 			tweet_string = tweet.getRetweetedStatus().getText().toLowerCase();
         } else {
 			tweet_string = tweet.getText().toLowerCase();
         }
+		//  filter useless words out
 		String filteredTweet = "";
 		for (String word : tweet_string.split(" ")) {
 			if (!uselessWords.contains(word)) {
 				filteredTweet = filteredTweet + " " + word;
 			}
 		}
+		// output new filtered string
 		collector.emit(new Values(tweet_string));
 	}
 	
@@ -51,7 +55,7 @@ public class FilterIrrelevantWordsBolt extends BaseRichBolt {
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("tweet_string"));
 	}
-	
+	//method  to get words from the uselessWords file as a Set
 	private Set<String> getUselessWords() {
 		Set<String> uselessWords = new HashSet<String>();
 		try {

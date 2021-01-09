@@ -29,6 +29,7 @@ public class NegativeWordsBolt extends BaseRichBolt{
 	
 	@Override
 	public void execute(Tuple input) {
+		// when a tuple comes in, checks if it contains negative words
 		final String tweet_string = (String) input.getValue(0);
 		boolean negativeTweet = false;
 		for (String word : tweet_string.split(" ")) {
@@ -43,7 +44,7 @@ public class NegativeWordsBolt extends BaseRichBolt{
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("tweet_string", "sentiment", "sentiment_value"));
 	}
-	
+	//method  to get words from the negativeWords file as a Set
 	private Set<String> getNegativeWords() {
 		Set<String> negativeWords = new HashSet<String>();
 		try {

@@ -1,5 +1,4 @@
 package spouts;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +7,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import org.apache.storm.Config;
 import org.apache.storm.spout.SpoutOutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -28,6 +26,7 @@ public class TwitterStreamingSpout extends BaseRichSpout {
 	private TwitterStream twitterStream;
 	
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+		// Setup config for twitter  streaming
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true)
 		  .setOAuthConsumerKey("vVzbGtSxcxqnHdgpjy3pz7H0X")
@@ -35,6 +34,7 @@ public class TwitterStreamingSpout extends BaseRichSpout {
 		  .setOAuthAccessToken("970096902296555525-4kfcYVBHTYH0OT1wuqXQzeqmb2FdHHu")
 		  .setOAuthAccessTokenSecret("MRxX63y6MozUab586PC42peB8fHHL7se8t0cYB0YgaMTj")
 		  .setTweetModeExtended(true);
+		// get twitter stream object
 		this.twitterStream = new TwitterStreamFactory(cb.build()).getInstance();
 		this.collector = collector;
 		this.queue = new LinkedBlockingQueue<>();
@@ -55,6 +55,7 @@ public class TwitterStreamingSpout extends BaseRichSpout {
 			public void onStallWarning(StallWarning warning) {}
 		};
 		twitterStream.addListener(listener);
+		// Setup Filter to only get only covid vaccine related tweets
 		FilterQuery filterQuery = new FilterQuery();
 		filterQuery.language(new String[]{"en"});
 		for (String topic : getTopicsToSearchFor()) {
@@ -76,7 +77,7 @@ public class TwitterStreamingSpout extends BaseRichSpout {
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("tweet"));
 	}
-	
+	// Method to read the contents of the topicsToSearchFor file into a list
 	private List<String> getTopicsToSearchFor() {
 		List<String> topicsToSearchFor = new ArrayList<String>();
 		try {
@@ -93,13 +94,6 @@ public class TwitterStreamingSpout extends BaseRichSpout {
 
 	@Override
 	public void activate() {};
-	
-	@Override
-	public Map<String, Object> getComponentConfiguration() {
-		Config ret = new Config();
-		ret.setMaxTaskParallelism(1);
-		return ret;
-	}
 
 	@Override
 	public void deactivate() {

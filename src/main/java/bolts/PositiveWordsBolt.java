@@ -29,6 +29,7 @@ public class PositiveWordsBolt extends BaseRichBolt{
 	
 	@Override
 	public void execute(Tuple input) {
+		// when a tuple comes in, checks if it contains positive words
 		final String tweet_string = (String) input.getValue(0);
 		boolean positiveTweet = false;
 		for (String word : tweet_string.split(" ")) {
@@ -43,7 +44,7 @@ public class PositiveWordsBolt extends BaseRichBolt{
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("tweet_string", "sentiment", "sentiment_value"));
 	}
-	
+	//method  to get words from the positiveWords file as a Set
 	private Set<String> getPositiveWords() {
 		Set<String> positiveWords = new HashSet<String>();
 		try {
